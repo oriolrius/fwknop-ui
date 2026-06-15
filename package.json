@@ -1,0 +1,13 @@
+{
+  "name": "fwknop-ui",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Tactical web console for the fwknop Single Packet Authorization client",
+  "type": "module",
+  "scripts": {
+    "setup": "npm --prefix server install && npm --prefix web install",
+    "dev": "node scripts/dev.mjs",
+    "build": "npm --prefix web install && npm --prefix web run build",
+    "start": "npm --prefix server start"
+  }
+}
