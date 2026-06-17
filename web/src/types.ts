@@ -85,3 +85,17 @@ export interface Meta {
   bin: string;
   stanzas: Stanza[];
 }
+
+export interface User {
+  sub: string;
+  name?: string;
+  email?: string;
+}
+
+// Result of GET /api/auth/me. `disabled` = OIDC turned off (open mode).
+export interface AuthState {
+  disabled?: boolean;
+  authenticated?: boolean;
+  user?: User;
+  scopes?: string[];
+}

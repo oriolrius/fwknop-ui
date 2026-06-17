@@ -6,7 +6,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 
-const DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'data');
+// Data dir is overridable (FWKNOP_DATA_DIR) so tests can use a throwaway location.
+const DATA_DIR = process.env.FWKNOP_DATA_DIR || join(dirname(fileURLToPath(import.meta.url)), '..', 'data');
 const PRESETS = join(DATA_DIR, 'presets.json');
 const HISTORY = join(DATA_DIR, 'history.json');
 const HISTORY_LIMIT = 200;

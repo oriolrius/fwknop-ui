@@ -89,11 +89,71 @@ Run it on the machine where `fwknop` and `~/.fwknoprc` live.
 
 ### Configuration
 
+Settings come from a YAML file (`config.yaml`, gitignored) merged over built‑in
+defaults; copy [`config.example.yaml`](config.example.yaml) to get started. Point
+elsewhere with `CONFIG_FILE=/path/to/config.yaml`. Secrets should use
+`${ENV_VAR}` interpolation rather than being written into the file.
+
+A few environment variables still override the matching settings for backward
+compatibility:
+
 | Env var     | Default       | Purpose                                  |
 |-------------|---------------|------------------------------------------|
 | `PORT`      | `8787`        | server / API port                        |
 | `FWKNOP_BIN`| `fwknop`      | path to the fwknop client binary         |
 | `FWKNOPRC`  | `~/.fwknoprc` | rc file scanned for named stanzas         |
+| `CONFIG_FILE` | `./config.yaml` | path to the YAML config file           |
+
+## API & OpenAPI
+
+The frontend talks to a REST API documented as an **OpenAPI 3.1** spec generated
+from the server's schemas:
+
+- **`GET /api/openapi.json`** — the machine‑readable spec.
+- **`GET /api/docs`** — interactive Swagger UI.
+
+Endpoints: `GET /api/meta`, `POST /api/preview`, `POST /api/knock`,
+`GET/POST/DELETE /api/presets`, `GET/DELETE /api/history`, and `GET /api/auth/me`.
+
+## Authentication (OIDC)
+
+Auth is **off by default** — the console runs open, bound to localhost, exactly
+as before. Set `auth.enabled: true` in `config.yaml` to require sign‑in against
+any OpenID Connect provider (Keycloak, Authentik, Authelia, …). Two ways in:
+
+- **Browser** — OIDC Authorization Code + PKCE; the SPA shows a sign‑in gate and
+  the server keeps an httpOnly cookie session.
+- **API** — send `Authorization: Bearer <access_token>`; the token is verified
+  against the IdP's JWKS. Great for scripting against the documented OAS.
+
+**Per‑endpoint scopes** are configured under `auth.require` and grouped as
+`read` (meta/preview/presets/history reads), `knock` (sending a packet), and
+`write` (mutating presets/history). A request passes a group if its
+scopes/claims contain **any** listed value; an empty list means "any
+authenticated user". Disabling auth makes all scope checks pass‑through.
+
+```yaml
+auth:
+  enabled: true
+  issuer: https://idp.example.com/realms/main
+  clientId: fwknop-ui
+  clientSecret: ${AUTH_CLIENT_SECRET}
+  redirectUri: http://localhost:8787/auth/callback
+  session: { secret: ${AUTH_SESSION_SECRET} }
+  require:
+    read:  [fwknop:read]
+    knock: [fwknop:knock]
+    write: [fwknop:write]
+```
+
+## Testing
+
+```bash
+npm test            # server (vitest + supertest + mock OIDC) and web (vitest + jsdom)
+```
+
+The suite needs neither a real `fwknop` binary (a fake stands in) nor a real
+IdP (an in‑process `oauth2-mock-server` issues tokens), so it runs anywhere.
 
 ## Managing multiple hosts
 

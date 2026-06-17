@@ -1,0 +1,42 @@
+# fwknop-ui configuration. Copy to `config.yaml` (gitignored) and edit.
+# Secrets should NOT be written here directly — use ${ENV_VAR} interpolation
+# (e.g. export AUTH_CLIENT_SECRET=... before starting). Environment variables
+# PORT / FWKNOP_BIN / FWKNOPRC also still override the matching settings.
+
+server:
+  port: 8787
+
+fwknop:
+  bin: fwknop          # path to the fwknop client binary (must be on PATH or absolute)
+  rcFile: ~/.fwknoprc  # rc file scanned for named stanzas
+
+auth:
+  # Master switch. false (default) = no OIDC, open mode — exactly the original
+  # localhost-only behavior. Set true to require sign-in.
+  enabled: false
+
+  # --- OIDC provider (any OpenID Connect IdP: Keycloak, Authentik, Authelia, ...) ---
+  issuer: https://idp.example.com/realms/main      # discovery base (.well-known/openid-configuration)
+  clientId: fwknop-ui
+  clientSecret: ${AUTH_CLIENT_SECRET}              # confidential client secret (from env)
+  redirectUri: http://localhost:8787/auth/callback
+  postLogoutRedirectUri: http://localhost:8787/
+  appOrigin: http://localhost:8787                 # browser origin, used for CORS when auth is on
+  scope: openid profile email                      # scopes requested at login
+
+  # --- Bearer (API) token validation ---
+  audience: fwknop-ui      # expected `aud` of access tokens (leave empty to skip aud check)
+  scopeClaim: scope        # claim holding granted scopes: space-delimited string, array, or e.g. 'groups'
+
+  # --- Browser session ---
+  session:
+    secret: ${AUTH_SESSION_SECRET}   # cookie signing secret (from env)
+    ttlHours: 12
+
+  # --- Per-endpoint authorization. A request passes a group if its scopes/claims
+  #     contain ANY of the listed values. Empty list = no scope required (any
+  #     authenticated user). ---
+  require:
+    read:  [fwknop:read]    # GET /api/meta, POST /api/preview, GET /api/presets, GET /api/history
+    knock: [fwknop:knock]   # POST /api/knock
+    write: [fwknop:write]   # POST/DELETE /api/presets, DELETE /api/history

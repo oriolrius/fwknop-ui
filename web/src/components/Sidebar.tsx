@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
-import { History, Moon, Play, Star, Sun, Trash2, X, Zap } from 'lucide-react';
+import { History, LogOut, Moon, Play, Star, Sun, Trash2, User, X, Zap } from 'lucide-react';
 import { useTheme } from '../theme';
-import type { HistoryEntry, Meta, Preset } from '../types';
+import type { AuthState, HistoryEntry, Meta, Preset } from '../types';
 
 function ago(ts: number): string {
   const s = Math.floor((Date.now() - ts) / 1000);
@@ -17,6 +17,8 @@ function summary(o: { destination?: string; access?: string; allowIp?: string; n
 }
 
 export function Sidebar({
+  auth,
+  onLogout,
   meta,
   presets,
   history,
@@ -29,6 +31,8 @@ export function Sidebar({
   onRerunHistory,
   onClearHistory,
 }: {
+  auth: AuthState;
+  onLogout: () => void;
   meta: Meta | null;
   presets: Preset[];
   history: HistoryEntry[];
@@ -42,6 +46,8 @@ export function Sidebar({
   onClearHistory: () => void;
 }) {
   const { theme, toggle } = useTheme();
+  const showUser = !auth.disabled && auth.authenticated;
+  const userLabel = auth.user?.name || auth.user?.email || auth.user?.sub || 'signed in';
 
   return (
     <aside className={`sidebar ${open ? 'open' : ''}`}>
@@ -150,6 +156,19 @@ export function Sidebar({
       </div>
 
       <div className="sb-foot">
+        {showUser && (
+          <div className="sb-user">
+            <span className="sb-user-ic">
+              <User size={13} />
+            </span>
+            <span className="sb-user-name" title={userLabel}>
+              {userLabel}
+            </span>
+            <button className="icon-btn" title="Sign out" onClick={onLogout}>
+              <LogOut size={14} />
+            </button>
+          </div>
+        )}
         <div className="sb-foot-meta">
           <div>
             client <b>{meta?.version || '—'}</b>

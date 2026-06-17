@@ -1,5 +1,6 @@
 node_modules/
 web/dist/
 server/data/
+config.yaml
 *.log
 .DS_Store

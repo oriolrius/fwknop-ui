@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Menu } from 'lucide-react';
-import { api } from './api';
-import type { HistoryEntry, KnockOptions, KnockResult, Meta, Preset } from './types';
+import { api, InsufficientScopeError } from './api';
+import type { AuthState, HistoryEntry, KnockOptions, KnockResult, Meta, Preset } from './types';
 import { Sidebar } from './components/Sidebar';
 import { KnockForm } from './components/KnockForm';
 import { Console } from './components/Console';
 import { SpecModal } from './components/SpecModal';
+import { Login } from './components/Login';
 
 const DEFAULT_OPTIONS: KnockOptions = {
   ipMode: 'allow',
@@ -18,6 +19,7 @@ const DEFAULT_OPTIONS: KnockOptions = {
 type Toast = { id: number; kind: 'ok' | 'fail' | 'info'; msg: string };
 
 export function App() {
+  const [auth, setAuth] = useState<AuthState | null>(null);
   const [meta, setMeta] = useState<Meta | null>(null);
   const [presets, setPresets] = useState<Preset[]>([]);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -44,20 +46,34 @@ export function App() {
     setOptions((o) => ({ ...o, [key]: value }));
   }, []);
 
-  // initial load
+  // auth probe — decides whether to show the app, the login gate, or nothing yet
   useEffect(() => {
+    api.me().then(setAuth).catch(() => setAuth({ authenticated: false }));
+  }, []);
+
+  const authed = !!auth && (auth.disabled || auth.authenticated === true);
+
+  // initial load — only once we know the user may access the API
+  useEffect(() => {
+    if (!authed) return;
     api.meta().then(setMeta).catch(() => toast('fail', 'backend unreachable'));
     api.presets().then(setPresets).catch(() => {});
     api.history().then(setHistory).catch(() => {});
-  }, [toast]);
+  }, [authed, toast]);
 
   // live command preview (debounced)
   useEffect(() => {
+    if (!authed) return;
     const id = setTimeout(() => {
       api.preview(options).then((r) => setCommand(r.command)).catch(() => {});
     }, 120);
     return () => clearTimeout(id);
-  }, [options]);
+  }, [options, authed]);
+
+  const onLogout = useCallback(async () => {
+    const r = await api.logout();
+    window.location.assign(r.logoutUrl || '/');
+  }, []);
 
   const windowSeconds = useMemo(() => {
     const n = Number(options.fwTimeout);
@@ -75,8 +91,8 @@ export function App() {
         setRunStartedAt(Date.now());
         toast(res.ok ? 'ok' : 'fail', res.ok ? (opts.test ? 'packet built' : 'knock sent') : `failed (exit ${res.exitCode})`);
         api.history().then(setHistory).catch(() => {});
-      } catch {
-        toast('fail', 'request failed');
+      } catch (e) {
+        toast('fail', e instanceof InsufficientScopeError ? e.message : 'request failed');
       } finally {
         setBusy(false);
       }
@@ -113,9 +129,15 @@ export function App() {
 
   const dest = options.destination || (meta?.stanzas.find((s) => s.name === options.namedConfig)?.hints.SPA_SERVER) || '—';
 
+  // Auth gate: nothing until the probe resolves; login screen when signed out.
+  if (auth === null) return <div className="app-boot" />;
+  if (!auth.disabled && auth.authenticated !== true) return <Login />;
+
   return (
     <div className="app">
       <Sidebar
+        auth={auth}
+        onLogout={onLogout}
         meta={meta}
         presets={presets}
         history={history}

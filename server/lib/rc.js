@@ -4,13 +4,13 @@ import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-const RC_PATH = process.env.FWKNOPRC || join(homedir(), '.fwknoprc');
+const DEFAULT_RC_PATH = process.env.FWKNOPRC || join(homedir(), '.fwknoprc');
 const HINT_KEYS = new Set(['ALLOW_IP', 'ACCESS', 'SPA_SERVER', 'SPA_SERVER_PORT', 'SPA_SERVER_PROTO', 'USE_HMAC']);
 
-export async function listStanzas() {
+export async function listStanzas(rcPath = DEFAULT_RC_PATH) {
   let text;
   try {
-    text = await readFile(RC_PATH, 'utf8');
+    text = await readFile(rcPath, 'utf8');
   } catch {
     return [];
   }

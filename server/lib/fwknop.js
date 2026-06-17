@@ -2,6 +2,7 @@
 // Secrets (keys) are never passed through a shell — argv is an array, execFile, no shell.
 import { execFile } from 'node:child_process';
 
+// Default binary; callers (index.js) pass the config-resolved bin explicitly.
 export const FWKNOP_BIN = process.env.FWKNOP_BIN || 'fwknop';
 
 const SECRET_FIELDS = new Set(['keyRijndael', 'keyB64Rijndael', 'keyB64Hmac']);
@@ -16,7 +17,7 @@ function tokenize(str) {
 }
 
 // Build the argv. Returns { argv, display } where display redacts secret values.
-export function buildArgv(o = {}) {
+export function buildArgv(o = {}, bin = FWKNOP_BIN) {
   const argv = [];
   const display = [];
   const push = (flag, value, { secret = false } = {}) => {
@@ -100,23 +101,23 @@ export function buildArgv(o = {}) {
     }
   }
 
-  return { argv, display: [FWKNOP_BIN, ...display].join(' ') };
+  return { argv, display: [bin, ...display].join(' ') };
 }
 
 // Run fwknop with the given options. Resolves with a structured result (never rejects on
 // non-zero exit — a failed knock is data, not an exception).
-export function runFwknop(options) {
-  const { argv, display } = buildArgv(options);
+export function runFwknop(options, bin = FWKNOP_BIN) {
+  const { argv, display } = buildArgv(options, bin);
   const startedAt = Date.now();
   return new Promise((resolve) => {
     execFile(
-      FWKNOP_BIN,
+      bin,
       argv,
       { timeout: 30000, maxBuffer: 1024 * 1024 },
       (err, stdout, stderr) => {
         const durationMs = Date.now() - startedAt;
         const exitCode = err && typeof err.code === 'number' ? err.code : err ? 1 : 0;
-        const spawnError = err && err.code === 'ENOENT' ? `fwknop binary not found (${FWKNOP_BIN})` : null;
+        const spawnError = err && err.code === 'ENOENT' ? `fwknop binary not found (${bin})` : null;
         resolve({
           ok: exitCode === 0 && !spawnError,
           exitCode,
@@ -137,9 +138,9 @@ export function redactOptions(o = {}) {
   return clean;
 }
 
-export function fwknopVersion() {
+export function fwknopVersion(bin = FWKNOP_BIN) {
   return new Promise((resolve) => {
-    execFile(FWKNOP_BIN, ['--version'], { timeout: 5000 }, (err, stdout) => {
+    execFile(bin, ['--version'], { timeout: 5000 }, (err, stdout) => {
       if (err) return resolve(null);
       const m = (stdout || '').match(/client\s+([\d.]+)/i);
       resolve(m ? m[1] : (stdout || '').trim().split('\n')[0]);

@@ -140,7 +140,7 @@ export function SpecModal({ options, meta, onClose }: { options: KnockOptions; m
             {s.hmac.on ? (
               <>
                 <Row k="hmac" v={`${s.hmac.algo} · encrypt-then-auth`} />
-                <Row k="key" v={s.hmac.key} />
+                <Row k="key" v={s.hmac.key || ''} />
               </>
             ) : (
               <div className="spec-row">

@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -7,6 +8,12 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': 'http://localhost:8787',
+      '/auth': 'http://localhost:8787', // OIDC login round-trip in dev
     },
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/test-setup.ts',
   },
 });

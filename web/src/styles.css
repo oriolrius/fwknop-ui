@@ -1344,3 +1344,83 @@ input:-webkit-autofill:active {
     font-size: 16px; /* prevents iOS zoom-on-focus */
   }
 }
+
+/* ---- auth: boot splash, login gate, sidebar user chip ---- */
+.app-boot {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+}
+
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg);
+}
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  padding: 28px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.login-lede {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-dim);
+}
+.login-lede svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--accent);
+}
+.login-btn {
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 14px;
+}
+
+/* sidebar user chip */
+.sb-foot {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.sb-user {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+.sb-user-ic {
+  display: inline-flex;
+  color: var(--accent);
+}
+.sb-user-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--ink-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
