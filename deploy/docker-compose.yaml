@@ -1,0 +1,40 @@
+# fwknop-ui — y0 deployment stack (lives at /opt/stacks/fwknop-ui/ on y0).
+#
+# Reachable at https://k.joor.net via the NPM reverse proxy (10.2.0.2) → y0:8787.
+# Secrets come from ./.env (git-ignored); config.yaml holds the non-secret wiring
+# and interpolates ${AUTH_CLIENT_SECRET} / ${AUTH_SESSION_SECRET} from the env.
+#
+# First deploy (before CI has published): build the image locally, e.g.
+#   git clone -b main https://github.com/oriolrius/fwknop-ui /opt/src/fwknop-ui
+#   docker build -t ghcr.io/oriolrius/fwknop-ui:latest /opt/src/fwknop-ui
+# Thereafter CI publishes to GHCR and you just:  docker compose pull && up -d
+
+services:
+  fwknop-ui:
+    image: ghcr.io/oriolrius/fwknop-ui:latest
+    pull_policy: missing        # use a locally-built image if present (first deploy)
+    container_name: fwknop-ui
+    restart: unless-stopped
+    # Host networking: the server needs to reach iam.joor.net (k5, internal) for OIDC
+    # discovery/JWKS/token. y0's user-defined docker bridges can't route to that LAN
+    # host, but the host itself resolves and reaches it fine. Binds 0.0.0.0:8787 on y0;
+    # NPM (10.2.0.2) forwards k.joor.net → 10.2.0.3:8787.
+    network_mode: host
+    environment:
+      CONFIG_FILE: /config/config.yaml
+      AUTH_CLIENT_SECRET: ${AUTH_CLIENT_SECRET:?set in .env}
+      AUTH_SESSION_SECRET: ${AUTH_SESSION_SECRET:?set in .env}
+      FWKNOP_DATA_DIR: /data
+    volumes:
+      - ./config.yaml:/config/config.yaml:ro
+      - ./fwknoprc:/root/.fwknoprc:ro   # SPA stanzas (keys stay here, out of the app) — optional
+      - fwknop-data:/data               # presets + history
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8787/api/meta').then(r=>process.exit(r.ok||r.status===401?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  fwknop-data:

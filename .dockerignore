@@ -1,0 +1,11 @@
+# Build context hygiene — keep secrets, local data and heavy dirs out of the image.
+.git
+**/node_modules
+web/dist
+server/data
+config.yaml
+deploy/.env
+deploy/config.yaml
+deploy/fwknoprc
+*.log
+.DS_Store
