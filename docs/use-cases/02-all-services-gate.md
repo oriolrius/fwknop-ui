@@ -93,7 +93,7 @@ USE_HMAC        Y
 ```
 
 The `ACCESS tcp/22` here is only the trigger the client sends; the server opens the whole
-`OPEN_PORTS` set. From this console, select **prod-gate** and **Send knock**. From a shell:
+`OPEN_PORTS` set. From this console, select **prod-gate** and **Knock**. From a shell:
 
 ```bash
 fwknop -n prod-gate

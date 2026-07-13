@@ -60,7 +60,7 @@ USE_HMAC        Y
 
 ## Knock and connect
 
-From this console: select **prod-ssh**, Access `tcp/22`, **Send knock**. Or from a shell:
+From this console: select **prod-ssh**, Access `tcp/22`, **Knock**. Or from a shell:
 
 ```bash
 fwknop -n prod-ssh && ssh user@spa.example.com

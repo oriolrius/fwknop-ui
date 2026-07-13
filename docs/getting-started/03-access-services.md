@@ -1,7 +1,7 @@
 ---
 title: Access a service
 group: Getting started
-order: 2
+order: 3
 summary: Send a magic packet — from this console or the CLI — and connect during the open window.
 ---
 
@@ -35,7 +35,7 @@ USE_HMAC               Y
 1. Open the **Knock** view.
 2. Pick your stanza under *Named config* (or fill the target fields manually).
 3. Set **Access** to the service you want, e.g. `tcp/22`.
-4. Hit **Send knock**. The console builds the exact `fwknop` command, runs the real
+4. Hit **Knock**. The console builds the exact `fwknop` command, runs the real
    binary, and streams the result.
 
 The command it runs is always visible in the output panel — nothing hidden:
