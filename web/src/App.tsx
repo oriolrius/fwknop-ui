@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Menu } from 'lucide-react';
+import { BookOpen, Menu, Zap } from 'lucide-react';
 import { api, InsufficientScopeError } from './api';
 import type { AuthState, HistoryEntry, KnockOptions, KnockResult, Meta, Preset } from './types';
 import { Sidebar } from './components/Sidebar';
@@ -8,6 +8,8 @@ import { KnockForm } from './components/KnockForm';
 import { Console } from './components/Console';
 import { SpecModal } from './components/SpecModal';
 import { Login } from './components/Login';
+import { DocView } from './components/DocView';
+import { firstSlug, getDoc } from './docs';
 
 const DEFAULT_OPTIONS: KnockOptions = {
   ipMode: 'allow',
@@ -17,6 +19,14 @@ const DEFAULT_OPTIONS: KnockOptions = {
 };
 
 type Toast = { id: number; kind: 'ok' | 'fail' | 'info'; msg: string };
+type View = 'knock' | 'docs';
+
+// Parse `#/docs/<slug>` from the URL hash → the doc slug it points at (or null).
+function docSlugFromHash(): string | null {
+  const h = window.location.hash;
+  if (!h.startsWith('#/docs/')) return null;
+  return h.slice('#/docs/'.length) || firstSlug;
+}
 
 export function App() {
   const [auth, setAuth] = useState<AuthState | null>(null);
@@ -35,6 +45,39 @@ export function App() {
   const [presetName, setPresetName] = useState('');
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastId = useRef(0);
+
+  // Knock ⇆ Docs. Docs are deep-linkable via `#/docs/<slug>` so links are shareable
+  // and the browser back button works.
+  const initialDoc = docSlugFromHash();
+  const [view, setView] = useState<View>(initialDoc ? 'docs' : 'knock');
+  const [docSlug, setDocSlug] = useState<string>(initialDoc && getDoc(initialDoc) ? initialDoc : firstSlug);
+
+  const openDoc = useCallback((slug: string) => {
+    setDocSlug(slug);
+    setView('docs');
+    setNavOpen(false);
+    if (window.location.hash !== `#/docs/${slug}`) window.location.hash = `#/docs/${slug}`;
+  }, []);
+
+  const showKnock = useCallback(() => {
+    setView('knock');
+    if (window.location.hash.startsWith('#/docs/')) window.history.replaceState(null, '', window.location.pathname + window.location.search);
+  }, []);
+
+  // Keep view/slug in sync with the URL hash (back/forward, shared links).
+  useEffect(() => {
+    const onHash = () => {
+      const slug = docSlugFromHash();
+      if (slug) {
+        setView('docs');
+        if (getDoc(slug)) setDocSlug(slug);
+      } else {
+        setView('knock');
+      }
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
 
   const toast = useCallback((kind: Toast['kind'], msg: string) => {
     const id = ++toastId.current;
@@ -143,6 +186,9 @@ export function App() {
         history={history}
         open={navOpen}
         onClose={() => setNavOpen(false)}
+        view={view}
+        docSlug={docSlug}
+        onSelectDoc={openDoc}
         onLoadPreset={(p) => {
           setOptions({ ...DEFAULT_OPTIONS, ...p.options });
           setNavOpen(false);
@@ -185,15 +231,32 @@ export function App() {
           <button className="menu-btn" onClick={() => setNavOpen(true)} aria-label="Open menu">
             <Menu size={18} />
           </button>
-          <div className="topbar-target">
-            <div className="topbar-label">Target server</div>
-            <div className="topbar-dest">
-              <span className="muted">spa://</span>
-              <span className="accent">{dest}</span>
-              <span className="muted">:{options.serverPort || '62201'}</span>
-              <span className="muted"> · {options.access || 'tcp/?'}</span>
-            </div>
+
+          <div className="view-tabs" role="tablist">
+            <button role="tab" aria-selected={view === 'knock'} className={view === 'knock' ? 'active' : ''} onClick={showKnock}>
+              {view === 'knock' && <motion.span layoutId="view-pill" className="view-pill" transition={{ type: 'spring', stiffness: 500, damping: 38 }} />}
+              <Zap size={13} />
+              <span>Knock</span>
+            </button>
+            <button role="tab" aria-selected={view === 'docs'} className={view === 'docs' ? 'active' : ''} onClick={() => openDoc(docSlug)}>
+              {view === 'docs' && <motion.span layoutId="view-pill" className="view-pill" transition={{ type: 'spring', stiffness: 500, damping: 38 }} />}
+              <BookOpen size={13} />
+              <span>Docs</span>
+            </button>
           </div>
+
+          {view === 'knock' && (
+            <div className="topbar-target">
+              <div className="topbar-label">Target server</div>
+              <div className="topbar-dest">
+                <span className="muted">spa://</span>
+                <span className="accent">{dest}</span>
+                <span className="muted">:{options.serverPort || '62201'}</span>
+                <span className="muted"> · {options.access || 'tcp/?'}</span>
+              </div>
+            </div>
+          )}
+          {view === 'docs' && <div className="topbar-target" />}
           {/* packet-fire pulse */}
           <div style={{ position: 'relative', width: 14, height: 14 }}>
             <AnimatePresence>
@@ -225,25 +288,31 @@ export function App() {
           </div>
         </div>
 
-        <div className="content">
-          <KnockForm
-            options={options}
-            set={set}
-            meta={meta}
-            busy={busy}
-            onKnock={onKnock}
-            onSavePreset={openSave}
-            onInfo={() => setInfoOpen(true)}
-            onReset={() => {
-              setOptions(DEFAULT_OPTIONS);
-              setResult(null);
-              toast('info', 'form reset');
-            }}
-          />
-          <div className="out-col">
-            <Console command={command} result={result} busy={busy} windowSeconds={windowSeconds} runStartedAt={runStartedAt} />
+        {view === 'docs' ? (
+          <div className="doc-content">
+            <DocView slug={docSlug} onNavigate={openDoc} />
           </div>
-        </div>
+        ) : (
+          <div className="content">
+            <KnockForm
+              options={options}
+              set={set}
+              meta={meta}
+              busy={busy}
+              onKnock={onKnock}
+              onSavePreset={openSave}
+              onInfo={() => setInfoOpen(true)}
+              onReset={() => {
+                setOptions(DEFAULT_OPTIONS);
+                setResult(null);
+                toast('info', 'form reset');
+              }}
+            />
+            <div className="out-col">
+              <Console command={command} result={result} busy={busy} windowSeconds={windowSeconds} runStartedAt={runStartedAt} />
+            </div>
+          </div>
+        )}
       </main>
 
       {/* SPA spec modal */}

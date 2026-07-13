@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
-import { History, LogOut, Moon, Play, Star, Sun, Trash2, User, X, Zap } from 'lucide-react';
+import { BookOpen, History, LogOut, Moon, Play, Star, Sun, Trash2, User, X, Zap } from 'lucide-react';
 import { useTheme } from '../theme';
 import type { AuthState, HistoryEntry, Meta, Preset } from '../types';
+import { docGroups } from '../docs';
 
 function ago(ts: number): string {
   const s = Math.floor((Date.now() - ts) / 1000);
@@ -24,6 +25,9 @@ export function Sidebar({
   history,
   open,
   onClose,
+  view,
+  docSlug,
+  onSelectDoc,
   onLoadPreset,
   onRunPreset,
   onDeletePreset,
@@ -38,6 +42,9 @@ export function Sidebar({
   history: HistoryEntry[];
   open: boolean;
   onClose: () => void;
+  view: 'knock' | 'docs';
+  docSlug: string;
+  onSelectDoc: (slug: string) => void;
   onLoadPreset: (p: Preset) => void;
   onRunPreset: (p: Preset) => void;
   onDeletePreset: (id: string) => void;
@@ -68,6 +75,35 @@ export function Sidebar({
         </div>
       </div>
 
+      {view === 'docs' ? (
+        <div className="sb-scroll">
+          {docGroups.map((g) => (
+            <div key={g.group}>
+              <div className="sb-section-head">
+                <span className="sb-section-title">
+                  <BookOpen size={12} /> {g.group}
+                </span>
+              </div>
+              {g.items.map((d, i) => (
+                <motion.button
+                  key={d.slug}
+                  className={`sb-item doc-item ${d.slug === docSlug ? 'active' : ''}`}
+                  onClick={() => onSelectDoc(d.slug)}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.03 * i }}
+                >
+                  <span className="doc-item-tick" />
+                  <span className="sb-item-body">
+                    <span className="sb-item-name">{d.title}</span>
+                    {d.summary && <span className="sb-item-meta">{d.summary}</span>}
+                  </span>
+                </motion.button>
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : (
       <div className="sb-scroll">
         {/* FAVORITES */}
         <div className="sb-section-head">
@@ -154,6 +190,7 @@ export function Sidebar({
           </button>
         ))}
       </div>
+      )}
 
       <div className="sb-foot">
         {showUser && (
