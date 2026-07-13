@@ -16,6 +16,9 @@ COPY web/ ./
 # The docs live at the repo root and are inlined into the bundle by import.meta.glob
 # ('../../docs/**/*.md' → /app/docs from /app/web/src). They must be present at build.
 COPY docs/ /app/docs/
+# vite.config.ts reads the version from the root package.json (single source of truth
+# for __APP_VERSION__); it must exist at /app/package.json at build time.
+COPY package.json /app/package.json
 RUN npm run build            # → /app/web/dist
 
 # --- Stage 2: runtime -------------------------------------------------------
