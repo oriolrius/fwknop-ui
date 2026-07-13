@@ -692,6 +692,15 @@ input:-webkit-autofill:active {
   gap: 10px;
   cursor: pointer;
   user-select: none;
+  /* button reset — without this the UA default button background (near-white)
+     shows behind the light label, making it unreadable in the dark theme. */
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
 }
 .toggle-track {
   width: 40px;
@@ -1462,7 +1471,11 @@ input:-webkit-autofill:active {
 .view-tabs button.active {
   color: var(--accent-ink);
 }
-.view-tabs button > * {
+/* Only the icon + label ride above the pill — must NOT match .view-pill, or it
+   overrides the pill's absolute positioning and collapses it to 0×0 (dark text
+   then sits on the dark panel = unreadable). */
+.view-tabs button svg,
+.view-tabs button > span:not(.view-pill) {
   position: relative;
   z-index: 1;
 }
