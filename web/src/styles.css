@@ -193,6 +193,19 @@ body::after {
 .brand-name b {
   color: var(--accent);
 }
+.brand-ver {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 5px;
+  padding: 1px 4px;
+  margin-left: 8px;
+  vertical-align: middle;
+  opacity: 0.85;
+}
 .brand-sub {
   font-family: var(--mono);
   font-size: 10px;

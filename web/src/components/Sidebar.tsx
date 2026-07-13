@@ -66,6 +66,7 @@ export function Sidebar({
           <div>
             <div className="brand-name">
               fwknop<b>·</b>spa
+              <span className="brand-ver">v{__APP_VERSION__}</span>
             </div>
             <div className="brand-sub">single packet auth</div>
           </div>
