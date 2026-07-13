@@ -58,6 +58,12 @@ export async function initAuth(app, cfg) {
   const scopeClaim = cfg.auth.scopeClaim || 'scope';
   const ttlMs = (cfg.auth.session?.ttlHours || 12) * 3600 * 1000;
 
+  // Behind a TLS-terminating reverse proxy (e.g. NPM), the app→proxy hop is plain
+  // http, so express-session would refuse to set the `secure` cookie unless we trust
+  // the proxy's X-Forwarded-Proto. Without this, the OIDC state cookie is dropped and
+  // login loops. Trust the first proxy hop when running with a secure (https) redirect.
+  if (cfg.auth.redirectUri.startsWith('https')) app.set('trust proxy', 1);
+
   const FileStore = FileStoreFactory(session);
   app.use(
     session({

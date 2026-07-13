@@ -2,5 +2,9 @@ node_modules/
 web/dist/
 server/data/
 config.yaml
+# deploy-time secrets / local state (only *.example.* is committed)
+deploy/.env
+deploy/config.yaml
+deploy/fwknoprc
 *.log
 .DS_Store

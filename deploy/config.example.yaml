@@ -1,0 +1,35 @@
+# fwknop-ui runtime config for the y0 / k.joor.net deployment.
+# Copy to config.yaml (git-ignored) on y0. Secrets are NOT stored here — they are
+# interpolated from the environment (see .env) via ${VAR}.
+
+server:
+  port: 8787
+
+fwknop:
+  bin: fwknop
+  rcFile: /root/.fwknoprc     # mounted read-only from ./fwknoprc
+
+auth:
+  enabled: true               # public hostname → auth is REQUIRED
+
+  # Keycloak realm `fwknop` at iam.joor.net
+  issuer: https://iam.joor.net/realms/fwknop
+  clientId: fwknop-ui
+  clientSecret: ${AUTH_CLIENT_SECRET}
+  redirectUri: https://k.joor.net/auth/callback
+  postLogoutRedirectUri: https://k.joor.net/
+  appOrigin: https://k.joor.net
+  scope: openid profile email
+
+  audience: fwknop-ui          # audience mapper on the Keycloak client
+  scopeClaim: scope
+
+  session:
+    secret: ${AUTH_SESSION_SECRET}
+    ttlHours: 12
+
+  # Per-endpoint scopes — the fwknop realm defines fwknop:read / knock / write.
+  require:
+    read:  [fwknop:read]
+    knock: [fwknop:knock]
+    write: [fwknop:write]
