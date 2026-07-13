@@ -192,7 +192,7 @@ export function KnockForm({ options: o, set, meta, busy, onKnock, onSavePreset, 
             </span>
           ) : (
             <>
-              <Send size={15} /> {o.test ? 'Build packet' : 'Send knock'}
+              <Send size={15} /> {o.test ? 'Build packet' : 'Knock'}
             </>
           )}
         </motion.button>
