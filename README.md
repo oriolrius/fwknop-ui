@@ -15,6 +15,17 @@ Knock to open a port, manage per‑host favorites and execution history, and ins
 
 ---
 
+## Screenshots
+
+|  |  |
+|:---|:---|
+| **Send a knock** — the main console maps every `fwknop` flag to a field, with a live redacted command preview. | **Wire-level spec sheet** — an `(i)` click shows exactly what the packet carries and what `fwknopd` does with it. |
+| [![Knock — dark theme](docs/assets/knock-dark.png)](docs/assets/knock-dark.png) | [![SPA transmission spec sheet](docs/assets/spec-sheet.png)](docs/assets/spec-sheet.png) |
+| **Blueprint light theme** — follows system preference; the toggle persists. | **Built-in docs** — a bundled guide with rendered Mermaid sequence diagrams. |
+| [![Knock — light theme](docs/assets/knock-light.png)](docs/assets/knock-light.png) | [![In-app documentation viewer](docs/assets/docs.png)](docs/assets/docs.png) |
+
+> Screenshots use placeholder hosts (`*.example.com`) and documentation IPs (`203.0.113.0/24`).
+
 ## Why
 
 [Single Packet Authorization](http://www.cipherdyne.org/fwknop/) hides a service (typically SSH) behind a default‑drop firewall and only opens it after a single, encrypted, authenticated, replay‑proof UDP packet — a hardened successor to port knocking. The reference client, `fwknop`, is a powerful CLI with a *lot* of flags.
