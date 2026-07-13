@@ -1,3 +1,10 @@
+## v0.3.0 (2026-07-13)
+
+### Feat
+
+- **docs**: render Mermaid diagrams in the in-app docs viewer
+- **ui**: shorten primary action label ("Send knock" → "Knock")
+
 ## v0.2.0 (2026-07-13)
 
 ### Feat
