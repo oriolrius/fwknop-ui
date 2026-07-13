@@ -1632,6 +1632,34 @@ input:-webkit-autofill:active {
   color: var(--accent);
 }
 
+/* mermaid diagrams — themed to the palette in Mermaid.tsx */
+.doc-mermaid {
+  margin: 0 0 22px;
+  padding: 18px 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow-x: auto;
+  text-align: center;
+}
+.doc-mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+.doc-mermaid-fallback {
+  overflow-x: auto;
+  background: var(--card);
+  border: 1px solid var(--danger-dim);
+  border-radius: var(--r);
+  padding: 16px 18px;
+  margin: 0 0 20px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink);
+  white-space: pre;
+}
+
 /* code blocks with copy button */
 .doc-code {
   position: relative;

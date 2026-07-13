@@ -4,6 +4,18 @@ import { Check, Copy, FileWarning } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { getDoc } from '../docs';
+import { Mermaid } from './Mermaid';
+
+/* Pull the raw text out of a fenced-code React node (`<code>…</code>`). */
+function codeText(node: ReactNode): string {
+  const el = Array.isArray(node) ? node[0] : node;
+  const kids = (el as { props?: { children?: ReactNode } })?.props?.children;
+  return Array.isArray(kids) ? kids.join('') : String(kids ?? '');
+}
+function codeClass(node: ReactNode): string {
+  const el = Array.isArray(node) ? node[0] : node;
+  return String((el as { props?: { className?: string } })?.props?.className ?? '');
+}
 
 /* Fenced code block with a copy button — matches the console's mono aesthetic. */
 function CodeBlock({ children }: { children?: ReactNode }) {
@@ -51,7 +63,12 @@ export function DocView({ slug, onNavigate }: { slug: string; onNavigate: (slug:
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          pre: ({ children }) => <CodeBlock>{children}</CodeBlock>,
+          pre: ({ children }) =>
+            codeClass(children).includes('language-mermaid') ? (
+              <Mermaid chart={codeText(children)} />
+            ) : (
+              <CodeBlock>{children}</CodeBlock>
+            ),
           a: ({ href, children }) => {
             if (href && href.startsWith('/docs/')) {
               const target = href.slice('/docs/'.length);
