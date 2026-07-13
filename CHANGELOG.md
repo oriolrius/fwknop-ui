@@ -1,3 +1,9 @@
+## v0.4.0 (2026-07-13)
+
+### Feat
+
+- **ui**: show app version badge in sidebar
+
 ## v0.3.0 (2026-07-13)
 
 ### Feat
