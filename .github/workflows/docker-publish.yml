@@ -4,6 +4,14 @@ name: Build & publish Docker image
 #   - push to main        → tags :latest and :main-<sha>
 #   - push tag vX.Y.Z     → tags :X.Y.Z, :X.Y, :latest
 #   - pull request        → build only (no push), to catch breakage early
+#
+# Security gates (both block the pipeline; both upload SARIF to the Security tab):
+#   - gitleaks  → scans the full git history for leaked secrets (fails on any hit).
+#   - Trivy     → scans the built image for vulnerabilities. Blocks on FIXABLE
+#                 HIGH/CRITICAL CVEs (ignore-unfixed) so unpatched base-image CVEs
+#                 don't wedge every build, while the full report still lands in the
+#                 Security tab.
+# The docker job `needs: gitleaks`, so a leaked secret prevents any publish.
 on:
   push:
     branches: [main]
@@ -16,11 +24,41 @@ env:
   IMAGE_NAME: ${{ github.repository }}   # oriolrius/fwknop-ui
 
 jobs:
-  docker:
+  # --- Secret scanning ------------------------------------------------------
+  gitleaks:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      security-events: write   # upload SARIF to code scanning
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # gitleaks needs the whole history to scan commits
+
+      - name: Gitleaks scan
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo \
+            ghcr.io/gitleaks/gitleaks:v8.30.1 \
+            detect --source=/repo --redact --no-banner \
+              --report-format sarif --report-path /repo/gitleaks.sarif \
+              --exit-code 1
+
+      - name: Upload gitleaks SARIF
+        if: always()            # publish findings even when the scan fails
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: gitleaks.sarif
+          category: gitleaks
+
+  # --- Build, scan, publish -------------------------------------------------
+  docker:
+    runs-on: ubuntu-latest
+    needs: gitleaks             # a leaked secret must block publishing
+    permissions:
+      contents: read
       packages: write
+      security-events: write    # upload Trivy SARIF to code scanning
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,6 +86,45 @@ jobs:
             type=sha,prefix=sha-,format=short
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') || startsWith(github.ref, 'refs/tags/v') }}
 
+      # Build once and load into the local daemon so Trivy can scan the exact
+      # image before it is ever pushed. The gha cache makes the later push cheap.
+      - name: Build image for scanning (load locally)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: fwknop-ui:scan
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # First Trivy pass: never fails, produces SARIF for the Security tab.
+      - name: Trivy scan (SARIF report)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: fwknop-ui:scan
+          format: sarif
+          output: trivy-results.sarif
+          severity: 'HIGH,CRITICAL'
+          exit-code: '0'
+
+      - name: Upload Trivy SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy
+
+      # Second Trivy pass: prints a table and FAILS the job on fixable HIGH/CRITICAL.
+      - name: Trivy gate (fail on fixable HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: fwknop-ui:scan
+          format: table
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+          exit-code: '1'
+
+      # Only reached when both scans pass. Cached layers → near-instant.
       - name: Build and push
         uses: docker/build-push-action@v6
         with:

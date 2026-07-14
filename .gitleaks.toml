@@ -1,0 +1,20 @@
+# gitleaks config for fwknop-ui — auto-loaded by `gitleaks detect` from the repo root.
+#
+# We keep the full default ruleset and add ONE narrow allowlist: gitleaks'
+# `generic-api-key` heuristic flags our fwknop key-*option identifiers*
+# (`keyRijndael`, `keyB64Rijndael`, `keyB64Hmac`) because they look like
+# `key... = <high-entropy>`. They are field NAMES in source, not secrets — real
+# keys never live in the repo (invariant #4: keys stay in ~/.fwknoprc; secrets
+# come from ${ENV} at runtime). The regex is anchored, so it can only ever match
+# the bare identifier string, never an actual base64 key value.
+title = "fwknop-ui"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "fwknop key-option identifiers are field names, not secrets"
+regexTarget = "secret"
+regexes = [
+  '''^(o\.)?key(B64)?(Rijndael|Hmac)$''',
+]
