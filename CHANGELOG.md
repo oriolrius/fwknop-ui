@@ -1,3 +1,10 @@
+## v0.4.1 (2026-07-14)
+
+### Fix
+
+- **docker**: harden runtime image (drop npm, pin base, non-root)
+- **ui**: render the segmented active-tab pill (contrast)
+
 ## v0.4.0 (2026-07-13)
 
 ### Feat
