@@ -1,0 +1,13 @@
+# mprocs dev runner for fwknop-ui — `pnpm dev` launches this.
+# Two independent processes; each can be restarted on its own from the mprocs TUI.
+procs:
+  server:
+    cwd: server
+    # node --watch index.js  →  http://localhost:8787  (API + serves built UI in prod)
+    cmd: ["npm", "run", "dev"]
+  web:
+    cwd: web
+    # Vite dev server. Bind 0.0.0.0 explicitly: in the Orca/WSL2 runtime the
+    # Windows browser only reaches IPv4 binds — a bare `--host` (::) is invisible.
+    # Proxies /api and /auth to the server on :8787 (see web/vite.config).
+    cmd: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
