@@ -3,7 +3,7 @@
 # fwknop-ui container. Two stages:
 #   1. build the Vite/React web UI into web/dist
 #   2. runtime: Node server + the REAL fwknop client binary (invariant: we wrap
-#      fwknop via execFile, never reimplement SPA — see CLAUDE.md).
+#      fwknop via execFile, never reimplement SPA — see AGENTS.md).
 #
 # The server serves the built UI from <repo>/web/dist and listens on 8787.
 

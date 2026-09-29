@@ -58,4 +58,4 @@ Don't hand-edit versions. After bump: `git push && git push --tags`, then `gh re
 
 - Don't commit `server/data/`, `config.yaml`, `node_modules/`, or `web/dist/` (see `.gitignore`).
 - Don't put real infrastructure (IPs, hostnames, private paths) in source or docs — use example values (`example.com`, `203.0.113.0/24`).
-- No per-subfolder `CLAUDE.md` — this single root file is intentionally the only one for a project this size.
+- No per-subfolder `AGENTS.md` — this single root file is intentionally the only one for a project this size.
