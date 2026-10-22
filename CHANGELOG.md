@@ -1,3 +1,9 @@
+## v0.4.2 (2026-10-22)
+
+### Fix
+
+- **security**: distrust the compromised eMudhra CAs and refresh the base
+
 ## v0.4.1 (2026-07-14)
 
 ### Fix
