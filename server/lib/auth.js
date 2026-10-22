@@ -13,7 +13,12 @@ import { fileURLToPath } from 'node:url';
 import * as client from 'openid-client';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
-const SESSIONS_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'sessions');
+// Same data dir as the presets/history store (FWKNOP_DATA_DIR): the image runs as
+// the unprivileged `node` user, which cannot create directories under /app/server.
+const SESSIONS_DIR = join(
+  process.env.FWKNOP_DATA_DIR || join(dirname(fileURLToPath(import.meta.url)), '..', 'data'),
+  'sessions',
+);
 
 const uniq = (arr) => [...new Set(arr.filter(Boolean))];
 
