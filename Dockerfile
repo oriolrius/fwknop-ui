@@ -9,8 +9,8 @@
 
 # Base image pinned by digest for reproducible, supply-chain-verified builds. The
 # tag is kept alongside the digest for readability; bump both together (Renovate /
-# Dependabot can automate this). Digest = node:22-bookworm-slim as of 2026-07.
-ARG NODE_IMAGE=node:22-bookworm-slim@sha256:53ada149d435c38b14476cb57e4a7da73c15595aba79bd6971b547ceb6d018bf
+# Dependabot can automate this). Digest = node:22-bookworm-slim as of 2026-10-22.
+ARG NODE_IMAGE=node:22-bookworm-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d
 
 # --- Stage 1: build the web UI ---------------------------------------------
 FROM ${NODE_IMAGE} AS web
@@ -31,9 +31,18 @@ FROM ${NODE_IMAGE} AS runtime
 
 # The fwknop client binary. Debian bookworm ships fwknop-client 2.6.10 — the same
 # client this UI shells out to. ca-certificates so OIDC discovery/JWKS over TLS works.
+# `apt-get upgrade` pulls the distro security fixes newer than the pinned base
+# (incl. the ca-certificates that distrust the compromised eMudhra intermediates).
 RUN apt-get update \
+ && apt-get upgrade -y \
  && apt-get install -y --no-install-recommends fwknop-client ca-certificates \
  && rm -rf /var/lib/apt/lists/*
+
+# Trust the distro CA store only. Node otherwise uses its compiled-in Mozilla
+# roots, which still include the compromised eMudhra chain (2026-10) and only
+# change with a Node release; --use-system-ca would merely ADD the system store.
+ENV NODE_OPTIONS="--use-openssl-ca" \
+    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
 ENV NODE_ENV=production
 WORKDIR /app/server
